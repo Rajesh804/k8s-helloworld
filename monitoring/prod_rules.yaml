@@ -1,0 +1,36 @@
+groups:
+- name: helloworld:prod
+  rules:
+  - alert: helloworld_deployment_status_replicas_missing
+    annotations:
+      description: 'Deployment {{$labels.deployment}}/{{$labels.namespace}} does not have as many replicas as desired'
+      summary: '{{$labels.deployment}} in {{$labels.namespace}} is missing replicas'
+    expr: kube_deployment_status_replicas_available{namespace="prod",deployment=~"helloworld.*"} < kube_deployment_spec_replicas{namespace="prod",deployment=~"helloworld.*"}
+    for: 5m
+    labels:
+      alert_type: missingReplicas
+      group_id: helloworld:prod
+      rule_id: helloworld:prod:missingReplicas
+      severity: critical
+  - alert: helloworld_container_terminated
+    annotations:
+      description: '{{$labels.namespace}}/{{$labels.pod}} has terminated/restarted due to {{$labels.reason}}'
+      summary: '{{$labels.namespace}}/{{$labels.pod}} has terminated/restarted due to {{$labels.reason}}'
+    expr: kube_pod_container_status_last_terminated_reason{reason=~"OOMKilled|Error",namespace="prod",pod=~"helloworld.*"} > 0
+           and on(container) rate(kube_pod_container_status_restarts_total{namespace="prod",pod=~"helloworld.*"}[5m]) * 300 > 1
+    labels:
+      alert_type: podTerminated
+      group_id: helloworld:prod
+      rule_id: helloworld:prod:podTerminated_warning
+      severity: warning
+  - alert: helloworld_api_http_healthcheck_probe
+    annotations:
+      description: 'HTTP Probe failed for {{$labels.instance}}'
+      summary: 'HTTP Probe failed for {{$labels.instance}}'
+    expr: probe_success{instance="dev.helloworld.com/"} != 1
+    for: 30s
+    labels:
+      alert_type: httpProbe
+      group_id: helloworld:prod
+      rule_id: helloworld:prod:httpProbe
+      severity: critical

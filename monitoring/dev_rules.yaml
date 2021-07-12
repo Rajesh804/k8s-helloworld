@@ -1,0 +1,57 @@
+groups:
+- name: helloworld:dev
+  rules:
+  - alert: helloworld_deployment_status_replicas_missing
+    annotations:
+      description: 'Deployment {{$labels.deployment}}/{{$labels.namespace}} does not have as many replicas as desired'
+      summary: '{{$labels.deployment}} in {{$labels.namespace}} is missing replicas'
+    expr: kube_deployment_status_replicas_available{namespace="dev",deployment=~"helloworld.*"} < kube_deployment_spec_replicas{namespace="dev",deployment=~"helloworld.*"}
+    for: 5m
+    labels:
+      alert_type: missingReplicas
+      group_id: helloworld:dev
+      rule_id: helloworld:dev:missingReplicas
+      severity: critical
+  - alert: helloworld_deployment_not_progressing
+    annotations:
+      description: 'Deployment {{$labels.deployment}}/{{$labels.namespace}} is not progressing'
+      summary: '{{$labels.deployment}}/{{$labels.namespace}} is not progressing'
+    expr: kube_deployment_status_condition{namespace="dev",deployment=~"helloworld.*",status="false",condition="Progressing"} > 0
+    labels:
+      alert_type: notProgressing
+      group_id: helloworld:dev
+      rule_id: helloworld:dev:notProgressing
+      severity: critical
+  - alert: helloworld_container_terminated_critical
+    annotations:
+      description: '{{$labels.namespace}}/{{$labels.pod}} has terminated/restarted due to {{$labels.reason}}'
+      summary: '{{$labels.namespace}}/{{$labels.pod}} has terminated/restarted due to {{$labels.reason}}'
+    expr: kube_pod_container_status_last_terminated_reason{reason=~"ContainerCannotRun|ErrImagePull",namespace="dev",pod=~"helloworld.*"} > 0
+           and on(container) rate(kube_pod_container_status_restarts_total{namespace="dev",pod=~"helloworld.*"}[5m]) * 300 > 1
+    labels:
+      alert_type: podTerminated
+      group_id: helloworld:dev
+      rule_id: helloworld:dev:podTerminated_critical
+      severity: critical
+  - alert: helloworld_container_terminated_warning
+    annotations:
+      description: '{{$labels.namespace}}/{{$labels.pod}} has terminated/restarted due to {{$labels.reason}}'
+      summary: '{{$labels.namespace}}/{{$labels.pod}} has terminated/restarted due to {{$labels.reason}}'
+    expr: kube_pod_container_status_last_terminated_reason{reason=~"OOMKilled|Error",namespace="dev",pod=~"helloworld.*"} > 0
+           and on(container) rate(kube_pod_container_status_restarts_total{namespace="dev",pod=~"helloworld.*"}[5m]) * 300 > 1
+    labels:
+      alert_type: podTerminated
+      group_id: helloworld:dev
+      rule_id: helloworld:dev:podTerminated_warning
+      severity: warning
+  - alert: helloworld_api_http_healthcheck_probe
+    annotations:
+      description: 'HTTP Probe failed for {{$labels.instance}}'
+      summary: 'HTTP Probe failed for {{$labels.instance}}'
+    expr: probe_success{instance="dev.helloworld.com/"} != 1
+    for: 30s
+    labels:
+      alert_type: httpProbe
+      group_id: helloworld:dev
+      rule_id: helloworld:dev:httpProbe
+      severity: critical
