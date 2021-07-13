@@ -15,7 +15,7 @@ spec:
         path: /var/run/docker.sock
   containers:
   - name: swym-jdk
-    image: ${SLAVE_CONTAINER_IMAGE}
+    image: XXXXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com/jenkins-slave
     imagePullPolicy: Always
     command:
     - cat
@@ -32,9 +32,10 @@ spec:
 
 //Provide the correct variables below
 environment {
-  ECR_URL = 'rajesh804/hello-world'
-  DEV_EKS_CLUSTER_NAME = 'dev-test'
-  PROD_EKS_CLUSTER_NAME = 'dev-test'
+  AWS_REGION = 'us-eat-1'
+  PROD_ECR_URL = 'XXXXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com/helloworld'
+  DEV_EKS_CLUSTER_NAME = 'dev-eks-cluster'
+  PROD_EKS_CLUSTER_NAME = 'prod-eks-cluster'
 }
 
 triggers {
@@ -56,6 +57,7 @@ stages {
       checkout scm
       script {
         env.commit_id = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+        sh(script: "aws ecr get-login --no-include-email --registry-ids --region ${AWS_REGION} | sh", returnStdout: true).trim()
       }
     }
   }
