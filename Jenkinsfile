@@ -33,7 +33,7 @@ spec:
 //Provide the correct variables below
 environment {
   AWS_REGION = 'us-eat-1'
-  PROD_ECR_URL = 'XXXXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com/helloworld'
+  ECR_URL = 'XXXXXXXXXXXXXX.dkr.ecr.us-east-1.amazonaws.com/helloworld'
   DEV_EKS_CLUSTER_NAME = 'dev-eks-cluster'
   PROD_EKS_CLUSTER_NAME = 'prod-eks-cluster'
 }
